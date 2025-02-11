@@ -26,7 +26,7 @@ def build_and_run():
     print(f"Running container '{container_name}' with volume mount and port mapping...")
     run_cmd = [
         "docker", "run", "--rm", "--name", container_name,
-        "-v", f"{os.getcwd()}:/app",
+        "-v", f"{os.getcwd()}/app:/app",
         "-p", "8000:8000",
         image_tag
     ]
