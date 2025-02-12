@@ -28,6 +28,7 @@ def build_and_run():
         "docker", "run", "--rm", "--name", container_name,
         "-v", f"{os.getcwd()}/app:/app",
         "-p", "8000:8000",
+        '--env-file', '.env',
         image_tag
     ]
     subprocess.run(run_cmd, check=True)

@@ -72,3 +72,4 @@ coverage.xml
 
 # Ignore environment variables
 .envrc
+.env
