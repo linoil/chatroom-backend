@@ -6,6 +6,7 @@ import httpx
 import asyncio
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.responses import StreamingResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
 from typing import List, Literal, Annotated
@@ -25,6 +26,17 @@ SessionDep = Annotated[Session, Depends(get_session)]
 @app.on_event("startup")
 def on_startup():
     init_db()
+origins = [
+    "http://localhost:5173", # vite server
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Define a data model using Pydantic for the request body
 class GenerateRequest(BaseModel):
