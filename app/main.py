@@ -5,16 +5,27 @@ import json
 import requests
 import httpx
 import asyncio
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from dotenv import load_dotenv
-from typing import List, Literal
+from typing import List, Literal, Annotated
+from sqlmodel import Session, select
+
+from models import ChatSession
+from database import init_db, get_session
 
 # Load environment variables from .env file if present
 load_dotenv()
 
 app = FastAPI()
+
+SessionDep = Annotated[Session, Depends(get_session)]
+
+# Initialize database on startup
+@app.on_event("startup")
+def on_startup():
+    init_db()
 
 # Define a data model using Pydantic for the request body
 class GenerateRequest(BaseModel):
@@ -96,3 +107,23 @@ async def chat_with_model(request: ChatRequest):
         
     #     json_data = response.json()
     #     return json_data["message"]["content"].encode("utf-8")
+
+
+# chat session
+@app.post("/sessions/")
+def create_chat_session(
+    chat_session: ChatSession, 
+    session: SessionDep
+) -> ChatSession:
+    session.add(chat_session)
+    session.commit()
+    session.refresh(chat_session)
+    return chat_session
+
+@app.get("/sessions/list")
+def get_user_sessions(
+    session: SessionDep
+) -> List[ChatSession]:
+    result = session.execute(select(ChatSession))
+    # return result
+    return result.scalars().all()
