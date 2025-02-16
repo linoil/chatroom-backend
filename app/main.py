@@ -2,7 +2,6 @@
 
 import os
 import json
-import requests
 import httpx
 import asyncio
 from fastapi import FastAPI, HTTPException, Depends
@@ -93,7 +92,7 @@ async def stream_chat_response(request_data: dict):
 
 @app.post("/chat")
 async def chat_with_model(request: ChatRequest):
-    request_data = request.dict()
+    request_data = request.model_dump()
 
     # streaming
     if request.stream:
