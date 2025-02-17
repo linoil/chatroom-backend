@@ -1,5 +1,6 @@
 # Refer to the repo: https://github.com/darcyg32/Ollama-FastAPI-Integration-Demo.git
 
+from contextlib import asynccontextmanager
 import os
 import json
 import httpx
@@ -18,14 +19,18 @@ from database import init_db, get_session
 # Load environment variables from .env file if present
 load_dotenv()
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # start up section 
+    init_db()
+    yield
+    # clean up section
+    # empty here
+
+app = FastAPI(lifespan=lifespan)
 
 SessionDep = Annotated[Session, Depends(get_session)]
 
-# Initialize database on startup
-@app.on_event("startup")
-def on_startup():
-    init_db()
 origins = [
     "http://localhost:5173",  # vite server
 ]
