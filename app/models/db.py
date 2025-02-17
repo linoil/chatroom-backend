@@ -19,18 +19,28 @@ from datetime import datetime
 # ==========================
 # Chat Session Table
 # ==========================
-class ChatSession(SQLModel, table=True):
-    id: UUID = Field(default_factory=uuid4, primary_key=True)
+
+class ChatSessionBase(SQLModel):
     title: str = Field(max_length=255)
-    # user_id: Optional[UUID] = Field(default=None, foreign_key="user.id", nullable=True)
+
+class ChatSessionTable(ChatSessionBase, table=True):
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class ChatSessionPublic(ChatSessionBase):
+    id: UUID
+
+class ChatSessionCreate(ChatSessionBase):
+    pass
+
+class ChatSessionUpdate(SQLModel):
+    title: str | None = Field(default=None, max_length=255)
 
     # # Relationship: One ChatSession -> Many ChatMessages
     # messages: List["ChatMessage"] = Relationship(back_populates="session")
-    
+
     # # Relationship: Many ChatSessions -> One User
     # user: Optional[User] = Relationship(back_populates="chat_sessions")
-
 
 # ==========================
 # Chat Message Table

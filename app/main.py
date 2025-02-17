@@ -3,17 +3,18 @@
 from contextlib import asynccontextmanager
 import os
 import json
+from uuid import UUID
 import httpx
 import asyncio
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Query
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 from dotenv import load_dotenv
 from typing import List, Annotated
 from sqlmodel import Session, select
 
-from models import ChatSession
+from models.ai import ChatRequest
+from models.db import ChatSessionTable, ChatSessionBase, ChatSessionCreate, ChatSessionPublic, ChatSessionUpdate
 from database import init_db, get_session
 
 # Load environment variables from .env file if present
@@ -42,13 +43,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-class ChatRequest(BaseModel):
-    model: str
-    messages: List[dict]
-    stream: bool = True
-
 
 # Use the environment variable OLLAMA_CHAT_URL or fallback to localhost
 CHAT_URL = os.getenv("OLLAMA_CHAT_URL", "http://localhost:11434/api/chat")
@@ -103,16 +97,36 @@ async def chat_with_model(request: ChatRequest):
 
 
 # chat session
-@app.post("/sessions/")
-def create_chat_session(chat_session: ChatSession, session: SessionDep) -> ChatSession:
-    session.add(chat_session)
+@app.post("/sessions/", response_model=ChatSessionPublic)
+def create_chat_session(chat_session: ChatSessionCreate, session: SessionDep):
+    db_chat_session = ChatSessionTable.model_validate(chat_session)
+    session.add(db_chat_session)
     session.commit()
-    session.refresh(chat_session)
+    session.refresh(db_chat_session)
+    return db_chat_session
+
+@app.get("/sessions/", response_model=List[ChatSessionPublic])
+def read_all_sessions(session: SessionDep, offset: int = 0, limit: Annotated[int, Query(le=100)] = 100):
+    statement = select(ChatSessionTable).offset(offset).limit(limit)
+    chat_sessions = session.exec(statement)
+    return chat_sessions.all()
+
+@app.get("/sessions/{id}", response_model=ChatSessionPublic)
+def read_single_session(session: SessionDep, id: UUID):
+    chat_session = session.get(ChatSessionTable, id)
+    if chat_session is None:
+        raise HTTPException(status_code=404, detail="Chat session not found")
     return chat_session
 
+@app.put("/sessions/{id}", response_model=ChatSessionPublic)
+def update_chat_session(id: UUID, chat_session: ChatSessionUpdate, session: SessionDep):
+    db_chat_session = session.get(ChatSessionTable, id)
+    if db_chat_session is None:
+        raise HTTPException(status_code=404, detail="Chat session not found")
+    updated_chat_session_data = chat_session.model_dump(exclude_none=True)
+    db_chat_session.sqlmodel_update(updated_chat_session_data)
+    session.add(db_chat_session)
+    session.commit()
+    session.refresh(db_chat_session)
+    return db_chat_session
 
-@app.get("/sessions/list")
-def get_user_sessions(session: SessionDep) -> List[ChatSession]:
-    result = session.execute(select(ChatSession))
-    # return result
-    return result.scalars().all()
