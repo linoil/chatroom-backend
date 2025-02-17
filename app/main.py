@@ -107,7 +107,7 @@ def create_chat_session(chat_session: ChatSessionCreate, session: SessionDep):
 
 @app.get("/sessions/", response_model=List[ChatSessionPublic])
 def read_all_sessions(session: SessionDep, offset: int = 0, limit: Annotated[int, Query(le=100)] = 100):
-    statement = select(ChatSessionTable).offset(offset).limit(limit)
+    statement = select(ChatSessionTable).order_by(ChatSessionTable.created_at).offset(offset).limit(limit)
     chat_sessions = session.exec(statement)
     return chat_sessions.all()
 
