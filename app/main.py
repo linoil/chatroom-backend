@@ -16,6 +16,9 @@ from models.db import (
     ChatSessionCreate,
     ChatSessionPublic,
     ChatSessionUpdate,
+    ChatMessageTable,
+    ChatMessageCreate,
+    ChatMessagePublic,
 )
 from database import init_db, get_session
 
@@ -151,3 +154,27 @@ def delte_chat_session(id: int, session: SessionDep):
     session.delete(chat_session)
     session.commit()
     return {}
+
+
+# chat message
+@app.post("/messages/", response_model=ChatMessagePublic)
+def create_message(chat_message: ChatMessageCreate, session: SessionDep):
+    db_chat_message = ChatMessageTable.model_validate(chat_message)
+    session.add(db_chat_message)
+    session.commit()
+    session.refresh(db_chat_message)
+    return db_chat_message
+
+@app.get("/messages/", response_model=List[ChatMessagePublic])
+def read_session_messages(session: SessionDep, session_id: int, offset: int = 0, limit: Annotated[int, Query(le=100)] = 100):
+    statement = (
+        select(ChatMessageTable)
+        .where(ChatMessageTable.session_id == session_id)
+        .order_by(col(ChatMessageTable.created_at))
+        .offset(offset)
+        .limit(limit)
+    )
+    chat_messages = session.exec(statement)
+    if chat_messages is None:
+        raise HTTPException(status_code=404, detail="Messages of chat session not found")
+    return chat_messages.all()

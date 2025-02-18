@@ -48,17 +48,17 @@ class ChatMessageBase(SQLModel):
     content: str = Field(max_length=1000)
 
 class ChatMessageTable(ChatMessageBase, table=True):
-    id: UUID = Field(default_factory=uuid4, primary_key=True)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    id: int | None = Field(default=None, primary_key=True)
+    created_at: str = Field(default_factory=currentTimeFactory)
 
-    role: str = Field(max_length=12, regex="^(user|assistant)$")
-    session_id: UUID = Field(foreign_key="chatsessiontable.id", nullable=False)
+    role: str = Field(max_length=12)
+    session_id: int = Field(foreign_key="chatsessiontable.id", nullable=False)
 
 class ChatMessagePublic(ChatMessageBase):
-    id: UUID
+    id: int
     role: str
-    session_id: UUID
+    session_id: int
 
 class ChatMessageCreate(ChatMessageBase):
-    session_id: UUID
-    role: str = Field(max_length=12, regex="^(user|assistant)$")
+    session_id: int
+    role: str = Field(max_length=12)
