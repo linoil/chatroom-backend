@@ -31,6 +31,10 @@ class ChatSessionTable(ChatSessionBase, table=True):
     # id: int | None = Field(default_factory=None, primary_key=True, sa_column_kwargs={'autoincrement': True}) 
     created_at: str = Field(default_factory=currentTimeFactory)
 
+    # INFO: By cascade_delete=True, it will delete all related messages when the session is deleted
+    # This behavior is performed by PYTHON
+    messages: List["ChatMessageTable"] = Relationship(back_populates="session", cascade_delete=True)
+
 class ChatSessionPublic(ChatSessionBase):
     id: int
 
@@ -45,19 +49,22 @@ class ChatSessionUpdate(SQLModel):
 # Chat Message Table
 # ==========================
 class ChatMessageBase(SQLModel):
-    content: str = Field(max_length=1000)
+    content: str = Field(max_length=5000)
 
 class ChatMessageTable(ChatMessageBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
     created_at: str = Field(default_factory=currentTimeFactory)
 
     role: str = Field(max_length=12)
-    session_id: int = Field(foreign_key="chatsessiontable.id", nullable=False)
+    # INFO: By cascade_delete=True, this message will be deleted when the session is deleted
+    # This behavior is performed by SQL
+    session_id: int = Field(foreign_key="chatsessiontable.id", nullable=False, ondelete="CASCADE")
+
+    session: ChatSessionTable = Relationship(back_populates="messages") 
 
 class ChatMessagePublic(ChatMessageBase):
     id: int
     role: str
-    session_id: int
 
 class ChatMessageCreate(ChatMessageBase):
     session_id: int

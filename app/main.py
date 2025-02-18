@@ -146,6 +146,7 @@ def update_chat_session(id: int, chat_session: ChatSessionUpdate, session: Sessi
     session.refresh(db_chat_session)
     return db_chat_session
 
+
 @app.delete("/sessions/{id}", status_code=204)
 def delte_chat_session(id: int, session: SessionDep):
     chat_session = session.get(ChatSessionTable, id)
@@ -165,16 +166,16 @@ def create_message(chat_message: ChatMessageCreate, session: SessionDep):
     session.refresh(db_chat_message)
     return db_chat_message
 
+
 @app.get("/messages/", response_model=List[ChatMessagePublic])
-def read_session_messages(session: SessionDep, session_id: int, offset: int = 0, limit: Annotated[int, Query(le=100)] = 100):
-    statement = (
-        select(ChatMessageTable)
-        .where(ChatMessageTable.session_id == session_id)
-        .order_by(col(ChatMessageTable.created_at))
-        .offset(offset)
-        .limit(limit)
-    )
-    chat_messages = session.exec(statement)
-    if chat_messages is None:
-        raise HTTPException(status_code=404, detail="Messages of chat session not found")
-    return chat_messages.all()
+def read_session_messages(session: SessionDep, session_id: int):
+    try:
+        chatSession = session.exec(
+            select(ChatSessionTable).where(ChatSessionTable.id == session_id)
+        ).one() 
+        return sorted(chatSession.messages, key=lambda x: x.created_at)
+
+
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=404, detail="Chat session not found")
