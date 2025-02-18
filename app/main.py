@@ -147,3 +147,11 @@ def update_chat_session(id: int, chat_session: ChatSessionUpdate, session: Sessi
     session.refresh(db_chat_session)
     return db_chat_session
 
+@app.delete("/sessions/{id}", status_code=204)
+def delte_chat_session(id: int, session: SessionDep):
+    chat_session = session.get(ChatSessionTable, id)
+    if chat_session is None:
+        raise HTTPException(status_code=404, detail="Chat session not found")
+    session.delete(chat_session)
+    session.commit()
+    return {}
