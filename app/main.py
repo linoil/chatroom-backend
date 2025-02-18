@@ -1,5 +1,3 @@
-# Refer to the repo: https://github.com/darcyg32/Ollama-FastAPI-Integration-Demo.git
-
 from contextlib import asynccontextmanager
 import os
 import json
@@ -130,3 +128,11 @@ def update_chat_session(id: UUID, chat_session: ChatSessionUpdate, session: Sess
     session.refresh(db_chat_session)
     return db_chat_session
 
+@app.delete("/sessions/{id}")
+def delete_chat_session(id: UUID, session: SessionDep):
+    db_chat_session = session.get(ChatSessionTable, id)
+    if db_chat_session is None:
+        raise HTTPException(status_code=404, detail="Chat session not found")
+    session.delete(db_chat_session)
+    session.commit()
+    return {"ok": True}
