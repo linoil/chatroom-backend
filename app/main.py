@@ -3,7 +3,6 @@
 from contextlib import asynccontextmanager
 import os
 import json
-from uuid import UUID
 import httpx
 import asyncio
 from fastapi import FastAPI, HTTPException, Depends, Query
@@ -11,12 +10,11 @@ from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from typing import List, Annotated
-from sqlmodel import Session, select
+from sqlmodel import Session, select, col
 
 from models.ai import ChatRequest
 from models.db import (
     ChatSessionTable,
-    ChatSessionBase,
     ChatSessionCreate,
     ChatSessionPublic,
     ChatSessionUpdate,
@@ -119,7 +117,7 @@ def read_all_sessions(
 ):
     statement = (
         select(ChatSessionTable)
-        .order_by(ChatSessionTable.created_at)
+        .order_by(col(ChatSessionTable.created_at))
         .offset(offset)
         .limit(limit)
     )

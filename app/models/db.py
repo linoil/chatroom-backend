@@ -19,6 +19,9 @@ import datetime
 # Chat Session Table
 # ==========================
 
+def currentTimeFactory() -> str:
+    return str(datetime.datetime.now(datetime.timezone.utc).timestamp())
+
 class ChatSessionBase(SQLModel):
     title: str = Field(max_length=255)
 
@@ -26,7 +29,7 @@ class ChatSessionTable(ChatSessionBase, table=True):
     id: int | None = Field(default=None, primary_key=True) # Somehow it implies auto increment
     # INFO: This may be a explicit way to define auto increment
     # id: int | None = Field(default_factory=None, primary_key=True, sa_column_kwargs={'autoincrement': True}) 
-    created_at: float = Field(default_factory=datetime.datetime.now(datetime.UTC).timestamp)
+    created_at: str = Field(default_factory=currentTimeFactory)
 
 class ChatSessionPublic(ChatSessionBase):
     id: int
