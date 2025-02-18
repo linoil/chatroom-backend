@@ -136,3 +136,13 @@ def delete_chat_session(id: UUID, session: SessionDep):
     session.delete(db_chat_session)
     session.commit()
     return {"ok": True}
+
+# chat message
+
+# @app.post("/messages/", response_model=ChatSessionPublic)
+def create_message(chat_message: ChatMessageCreate, session: SessionDep):
+    db_chat_message = ChatMessageTable.model_validate(chat_message)
+    session.add(db_chat_message)
+    session.commit()
+    session.refresh(db_chat_message)
+    return db_chat_message
