@@ -36,21 +36,25 @@ class ChatSessionCreate(ChatSessionBase):
 class ChatSessionUpdate(SQLModel):
     title: str | None = Field(default=None, max_length=255)
 
-    # # Relationship: One ChatSession -> Many ChatMessages
-    # messages: List["ChatMessage"] = Relationship(back_populates="session")
-
-    # # Relationship: Many ChatSessions -> One User
-    # user: Optional[User] = Relationship(back_populates="chat_sessions")
 
 # ==========================
 # Chat Message Table
 # ==========================
-# class ChatMessage(SQLModel, table=True):
-#     id: UUID = Field(default_factory=uuid4, primary_key=True)
-#     session_id: UUID = Field(foreign_key="chatsession.id", nullable=False)
-#     role: str = Field(max_length=20, regex="^(user|assistant)$")  # Constraint: 'user' or 'assistant'
-#     content: str  # Fixed incorrect column type 'CONTENT' (should be 'TEXT' or 'str' in Python)
-#     created_at: datetime = Field(default_factory=datetime.utcnow)
+class ChatMessageBase(SQLModel):
+    content: str = Field(max_length=1000)
 
-#     # Relationship: Many ChatMessages -> One ChatSession
-#     session: ChatSession = Relationship(back_populates="messages")
+class ChatMessageTable(ChatMessageBase, table=True):
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+    role: str = Field(max_length=12, regex="^(user|assistant)$")
+    session_id: UUID = Field(foreign_key="chatsessiontable.id", nullable=False)
+
+class ChatMessagePublic(ChatMessageBase):
+    id: UUID
+    role: str
+    session_id: UUID
+
+class ChatMessageCreate(ChatMessageBase):
+    session_id: UUID
+    role: str = Field(max_length=12, regex="^(user|assistant)$")
