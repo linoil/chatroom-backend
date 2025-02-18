@@ -1,7 +1,6 @@
 from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional, List
-from uuid import UUID, uuid4
-from datetime import datetime
+import datetime
 
 # # ==========================
 # # User Table
@@ -20,15 +19,20 @@ from datetime import datetime
 # Chat Session Table
 # ==========================
 
+def currentTimeFactory() -> str:
+    return str(datetime.datetime.now(datetime.timezone.utc).timestamp())
+
 class ChatSessionBase(SQLModel):
     title: str = Field(max_length=255)
 
 class ChatSessionTable(ChatSessionBase, table=True):
-    id: UUID = Field(default_factory=uuid4, primary_key=True)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    id: int | None = Field(default=None, primary_key=True) # Somehow it implies auto increment
+    # INFO: This may be a explicit way to define auto increment
+    # id: int | None = Field(default_factory=None, primary_key=True, sa_column_kwargs={'autoincrement': True}) 
+    created_at: str = Field(default_factory=currentTimeFactory)
 
 class ChatSessionPublic(ChatSessionBase):
-    id: UUID
+    id: int
 
 class ChatSessionCreate(ChatSessionBase):
     pass
